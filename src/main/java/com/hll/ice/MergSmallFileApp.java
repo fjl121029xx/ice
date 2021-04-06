@@ -30,7 +30,7 @@ public class MergSmallFileApp {
 
         SparkSession spark = SparkSession.builder().config(sparkconf).enableHiveSupport().getOrCreate();
         Catalog catalog = new HiveCatalog(spark.sparkContext().hadoopConfiguration());
-        TableIdentifier name = TableIdentifier.of(args[0], args[1]);
+        TableIdentifier name = TableIdentifier.of(args[1], args[2]);
         Table table = catalog.loadTable(name);
         System.out.println(table.location());
 
@@ -38,10 +38,41 @@ public class MergSmallFileApp {
 //        Actions.forTable(table).rewriteManifests().execute();
 //        Actions.forTable(table).expireSnapshots().execute();
         // 1 day
-        long tsToExpire = System.currentTimeMillis() - (1000 * 60 * 60 * 1);
-        table.expireSnapshots()
-                .expireOlderThan(tsToExpire)
-                .commit();
+        String type = args[0];
+        switch (type) {
+            case "expire": {
+                /*
+                 * Expire Snapshots
+                 * */
+                long tsToExpire = System.currentTimeMillis() - (Integer.parseInt(args[3]));
+                //  table.expireSnapshots()
+                //          .expireOlderThan(tsToExpire)
+                //          .commit();
+                // spark
+                Actions.forTable(table)
+                        .expireSnapshots()
+                        .expireOlderThan(tsToExpire)
+                        .execute();
+                break;
+            }
+            case "orphan": {
+                Actions.forTable(table)
+                        .removeOrphanFiles()
+                        .execute();
+                break;
+            }
+            case "compact": {
+                {
+                    Actions.forTable(table).rewriteDataFiles()
+                            .filter(Expressions.equal("date", "2020-08-18"))
+                            .targetSizeInBytes(500 * 1024 * 1024) // 500 MB
+                            .execute();
+                    break;
+                }
+            }
+            default:
+        }
+
 
 //        Actions.forTable(table).rewriteDataFiles()
 //                .filter(Expressions.and(Expressions.equal("group_id", Integer.parseInt(args[3])), Expressions.lessThanOrEqual("report_date", args[4] + "T23:59:59.0000+08:00"), Expressions.greaterThanOrEqual("report_date", args[5] + "T00:00:00.0000+08:00")))
