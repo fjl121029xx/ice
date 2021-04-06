@@ -34,9 +34,9 @@ public class MergSmallFileApp {
         Table table = catalog.loadTable(name);
         System.out.println(table.location());
 
-        Actions.forTable(table).removeOrphanFiles().execute();
-        Actions.forTable(table).rewriteManifests().execute();
-        Actions.forTable(table).expireSnapshots().execute();
+//        Actions.forTable(table).removeOrphanFiles().execute();
+//        Actions.forTable(table).rewriteManifests().execute();
+//        Actions.forTable(table).expireSnapshots().execute();
         // 1 day
         long tsToExpire = System.currentTimeMillis() - (1000 * 60 * 60 * 1);
         table.expireSnapshots()
